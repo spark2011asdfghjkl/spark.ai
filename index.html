@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spark - AI Screen Copilot</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.9);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(38, 38, 38, 0.9);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(64, 64, 64, 1);
+        }
+    </style>
+</head>
+<body class="bg-black text-neutral-100 h-screen w-screen flex flex-col overflow-hidden antialiased select-none">
+
+    <!-- Header Navigation -->
+    <header class="h-14 border-b border-neutral-900 bg-black/90 backdrop-blur px-4 flex items-center justify-between z-20 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div id="starLogoContainer" class="w-9 h-9 rounded-lg bg-black border border-neutral-800 flex items-center justify-center overflow-hidden shadow-2xl shrink-0">
+                <canvas id="starLogoCanvas" class="w-full h-full"></canvas>
+            </div>
+            <div>
+                <h1 class="font-bold text-base md:text-lg tracking-tight text-white flex items-center gap-1.5">
+                    Spark <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">Copilot</span>
+                </h1>
+                <p class="text-[10px] text-neutral-500 font-mono hidden sm:block">REAL-TIME VISION & SCREEN ASSISTANT</p>
+            </div>
+        </div>
+
+        <!-- Mode Toolbar -->
+        <div class="flex items-center space-x-2 md:space-x-3">
+            <!-- Persona Selector -->
+            <div class="relative flex items-center">
+                <i data-lucide="brain-circuit" class="w-3.5 h-3.5 text-neutral-500 absolute left-2.5 pointer-events-none"></i>
+                <select id="personaSelect" class="bg-neutral-950 text-xs text-neutral-200 pl-8 pr-3 py-1.5 rounded-lg border border-neutral-800 focus:outline-none focus:border-neutral-600 transition cursor-pointer">
+                    <option value="math" selected>Math & Quiz Solver</option>
+                    <option value="coder">Code & Debug Auditor</option>
+                    <option value="tutor">General Visual Tutor</option>
+                    <option value="summary">Document Summarizer</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Split Container -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative bg-black">
+
+        <!-- LEFT PANEL: Screen Mirror & Capture Canvas -->
+        <section class="flex-1 flex flex-col bg-black relative border-r border-neutral-900 overflow-hidden">
+            
+            <!-- Viewport -->
+            <div id="viewportContainer" class="flex-1 relative flex items-center justify-center p-3 overflow-hidden bg-black">
+                
+                <!-- Processing Canvas Output -->
+                <canvas id="screenCanvas" class="max-w-full max-h-full rounded-xl object-contain border border-neutral-800 shadow-2xl bg-black hidden"></canvas>
+
+                <!-- Hidden File Input for Upload Fallback -->
+                <input type="file" id="imageFileInput" accept="image/*" class="hidden">
+
+                <!-- Initial State Placeholder -->
+                <div id="noStreamState" class="text-center max-w-md px-6 py-8 border border-neutral-900 rounded-2xl bg-neutral-950/80 backdrop-blur transition hover:border-neutral-700">
+                    <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-black flex items-center justify-center text-white border border-neutral-800 shadow-inner">
+                        <i data-lucide="image-plus" class="w-7 h-7 text-neutral-300"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-white mb-1">Paste or Upload Screenshot</h3>
+                    <p class="text-xs text-neutral-400 mb-4 leading-relaxed">
+                        Press <kbd class="px-1.5 py-0.5 bg-neutral-800 text-neutral-200 rounded font-mono text-[10px]">Ctrl+V</kbd> anywhere to paste a screenshot, or click below to upload an image file.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                        <button id="uploadImgBtn" class="px-4 py-2 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-semibold shadow-lg transition flex items-center justify-center space-x-2">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                            <span>Upload Screenshot</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="h-14 border-t border-neutral-900 bg-black/90 px-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-2">
+                    <button id="uploadToolbarBtn" class="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-semibold transition flex items-center space-x-1.5 shadow-md">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                        <span>Upload Screenshot</span>
+                    </button>
+                </div>
+
+                <div class="text-[11px] font-mono text-neutral-400 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Paste (Ctrl+V) Ready</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT PANEL: Chat Box & Interactive Assistant -->
+        <section class="w-full md:w-96 flex flex-col bg-neutral-950/60 backdrop-blur shrink-0 border-l border-neutral-900">
+            <!-- Chat Header -->
+            <div class="p-3.5 border-b border-neutral-900 flex items-center justify-between bg-black/40">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                    <span class="text-xs font-semibold tracking-wide text-neutral-200 uppercase font-mono">Spark Assistant</span>
+                </div>
+                <button id="clearChatBtn" class="text-neutral-500 hover:text-neutral-300 transition text-xs" title
